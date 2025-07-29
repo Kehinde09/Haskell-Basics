@@ -1,0 +1,62 @@
+-- HC6T1: Factorial (Recursive)
+factorial :: Integer -> Integer
+factorial 0 = 1
+factorial n = n * factorial (n - 1)
+
+-- HC6T2: Fibonacci (Recursive)
+fibonacci :: Integer -> Integer
+fibonacci 0 = 0
+fibonacci 1 = 1
+fibonacci n = fibonacci (n - 1) + fibonacci (n - 2)
+
+-- HC6T3: Sum of Elements Using foldr
+sumFoldr :: [Int] -> Int
+sumFoldr = foldr (+) 0
+
+-- HC6T4: Product of Elements Using foldl
+productFoldl :: [Int] -> Int
+productFoldl = foldl (*) 1
+
+-- HC6T5: Reverse a List (Recursive)
+reverseList :: [a] -> [a]
+reverseList [] = []
+reverseList (x:xs) = reverseList xs ++ [x]
+
+-- HC6T6: Element Exists in List
+elementExists :: Eq a => a -> [a] -> Bool
+elementExists _ [] = False
+elementExists e (x:xs) = (e == x) || elementExists e xs
+
+-- HC6T7: List Length
+listLength :: [a] -> Int
+listLength [] = 0
+listLength (_:xs) = 1 + listLength xs
+
+-- HC6T8: Filter Even Numbers
+filterEvens :: [Int] -> [Int]
+filterEvens = filter even
+
+-- HC6T9: Map Implementation
+myMap :: (a -> b) -> [a] -> [b]
+myMap _ [] = []
+myMap f (x:xs) = f x : myMap f xs
+
+-- HC6T10: Digits of a Number (Recursive)
+digits :: Integer -> [Int]
+digits n
+  | n < 10 = [fromIntegral n]
+  | otherwise = digits (n `div` 10) ++ [fromIntegral (n `mod` 10)]
+
+-- Main to test all functions
+main :: IO ()
+main = do
+  putStrLn $ "Factorial of 5: " ++ show (factorial 5)
+  putStrLn $ "Fibonacci of 6: " ++ show (fibonacci 6)
+  putStrLn $ "Sum of [1..5] using foldr: " ++ show (sumFoldr [1..5])
+  putStrLn $ "Product of [1..5] using foldl: " ++ show (productFoldl [1..5])
+  putStrLn $ "Reverse of [1,2,3,4]: " ++ show (reverseList [1,2,3,4])
+  putStrLn $ "Does 3 exist in [1,2,3,4]? " ++ show (elementExists 3 [1,2,3,4])
+  putStrLn $ "Length of [10,20,30]: " ++ show (listLength [10,20,30])
+  putStrLn $ "Filter evens from [1..10]: " ++ show (filterEvens [1..10])
+  putStrLn $ "Map (*2) to [1..5]: " ++ show (myMap (*2) [1..5])
+  putStrLn $ "Digits of 12345: " ++ show (digits 12345)
