@@ -1,0 +1,107 @@
+-- HC9.hs
+-- Complete Haskell code for HC9T1 to HC9T10
+
+-- HC9T1: Define a Parametric Type Synonym
+type Entity a = (String, a)  -- (Address, some other type info)
+
+-- Example entity
+entityExample :: Entity Int
+entityExample = ("123 Main Street", 42)
+
+-- HC9T2: Implement a Parametric Data Type
+data Box a = Empty | Has a deriving Show
+
+-- HC9T3: Function to Add Values in a Box
+addN :: Num a => a -> Box a -> Box a
+addN n (Has x) = Has (n + x)
+addN _ Empty   = Empty
+
+-- HC9T4: Extract a Value from a Box
+extract :: a -> Box a -> a
+extract def Empty    = def
+extract _   (Has x)  = x
+
+-- HC9T5: Parametric Data Type with Record Syntax
+data Shape a
+    = Circle { color :: a, radius :: Float }
+    | Rectangle { color :: a, width :: Float, height :: Float }
+    deriving Show
+
+circleShape :: Shape String
+circleShape = Circle { color = "Red", radius = 5 }
+
+rectangleShape :: Shape String
+rectangleShape = Rectangle { color = "Blue", width = 10, height = 5 }
+
+-- HC9T6: Recursive Data Type for Tweets
+data Tweet = Tweet
+  { content  :: String
+  , likes    :: Int
+  , comments :: [Tweet]
+  } deriving Show
+
+-- HC9T7: Engagement Function for Tweets
+engagement :: Tweet -> Int
+engagement (Tweet _ l cs) = l + sum (map engagement cs)
+
+tweetExample :: Tweet
+tweetExample = Tweet "Hello World" 10
+  [ Tweet "Nice post!" 5 []
+  , Tweet "Interesting..." 3
+      [ Tweet "Thanks!" 2 [] ]
+  ]
+
+-- HC9T8: Recursive Sequence Data Type
+data Sequence a = Nil | Node a (Sequence a) deriving Show
+
+-- Example sequence: 1 -> 2 -> 3
+seqExample :: Sequence Int
+seqExample = Node 1 (Node 2 (Node 3 Nil))
+
+-- HC9T9: Check for Element in a Sequence
+elemSeq :: Eq a => a -> Sequence a -> Bool
+elemSeq _ Nil = False
+elemSeq target (Node x xs)
+    | target == x = True
+    | otherwise   = elemSeq target xs
+
+-- HC9T10: Binary Search Tree Data Type
+data BST a = BSTEmpty | BSTNode a (BST a) (BST a) deriving Show
+
+-- Example BST
+bstExample :: BST Int
+bstExample =
+    BSTNode 10
+        (BSTNode 5 BSTEmpty BSTEmpty)
+        (BSTNode 15 BSTEmpty BSTEmpty)
+
+-- Main to demonstrate everything
+main :: IO ()
+main = do
+    -- HC9T1
+    putStrLn $ "HC9T1: Entity Example = " ++ show entityExample
+
+    -- HC9T2 & HC9T3
+    putStrLn $ "HC9T2: Box with value = " ++ show (Has 5)
+    putStrLn $ "HC9T3: Adding 3 to Box (Has 5) = " ++ show (addN 3 (Has 5))
+    putStrLn $ "HC9T3: Adding 3 to Empty = " ++ show (addN 3 Empty)
+
+    -- HC9T4
+    putStrLn $ "HC9T4: Extract from Box (Has 7) with default 0 = " ++ show (extract 0 (Has 7))
+    putStrLn $ "HC9T4: Extract from Empty with default 0 = " ++ show (extract 0 Empty)
+
+    -- HC9T5
+    putStrLn $ "HC9T5: Circle Shape = " ++ show circleShape
+    putStrLn $ "HC9T5: Rectangle Shape = " ++ show rectangleShape
+
+    -- HC9T6 & HC9T7
+    putStrLn $ "HC9T6: Tweet Example = " ++ show tweetExample
+    putStrLn $ "HC9T7: Engagement of tweetExample = " ++ show (engagement tweetExample)
+
+    -- HC9T8 & HC9T9
+    putStrLn $ "HC9T8: Sequence Example = " ++ show seqExample
+    putStrLn $ "HC9T9: Is 2 in Sequence? " ++ show (elemSeq 2 seqExample)
+    putStrLn $ "HC9T9: Is 4 in Sequence? " ++ show (elemSeq 4 seqExample)
+
+    -- HC9T10
+    putStrLn $ "HC9T10: BST Example = " ++ show bstExample
