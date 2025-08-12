@@ -1,0 +1,153 @@
+-- HC8.hs
+-- Complete Haskell code for HC8T1 to HC8T10
+
+-- HC8T1: Type Synonyms and Basic Function
+type Address = String
+type Value   = Int
+
+generateTx :: Address -> Address -> Value -> String
+generateTx fromAddr toAddr val =
+    "From: " ++ fromAddr ++ ", To: " ++ toAddr ++ ", Value: " ++ show val
+
+-- HC8T2: New Types and Data Constructors
+data PaymentMethod = Cash | Card | Cryptocurrency deriving Show
+
+data PersonTuple = PersonTuple String (String, Int) PaymentMethod deriving Show
+
+bob :: PersonTuple
+bob = PersonTuple "Bob" ("Main Street", 101) Cash
+
+-- HC8T3: Algebraic Data Types and Functions
+data Shape = Circle Float | Rectangle Float Float deriving Show
+
+area :: Shape -> Float
+area (Circle r)      = pi * r * r
+area (Rectangle w h) = w * h
+
+circleAreaExample :: Float
+circleAreaExample = area (Circle 5)
+
+rectangleAreaExample :: Float
+rectangleAreaExample = area (Rectangle 10 5)
+
+-- HC8T4: Record Syntax for Employee
+data Employee = Employee
+  { name :: String
+  , experienceInYears :: Float
+  } deriving Show
+
+richard :: Employee
+richard = Employee { name = "Richard", experienceInYears = 7.5 }
+
+-- HC8T5: Record Syntax for Person
+data PersonRecord = PersonRecord
+  { pname      :: String
+  , age        :: Int
+  , isEmployed :: Bool
+  } deriving Show
+
+person1 :: PersonRecord
+person1 = PersonRecord { pname = "Alice", age = 30, isEmployed = True }
+
+person2 :: PersonRecord
+person2 = PersonRecord { pname = "Eve", age = 25, isEmployed = False }
+
+-- HC8T6: Record Syntax for Shape Variants
+data ShapeVariant
+  = CircleVariant
+      { center :: (Float, Float)
+      , color  :: String
+      , radius :: Float
+      }
+  | RectangleVariant
+      { width  :: Float
+      , height :: Float
+      , color  :: String
+      } deriving Show
+
+circleInstance :: ShapeVariant
+circleInstance = CircleVariant { center = (0,0), color = "Red", radius = 5 }
+
+rectangleInstance :: ShapeVariant
+rectangleInstance = RectangleVariant { width = 10, height = 5, color = "Blue" }
+
+-- HC8T7: Data Types and Describing Animals
+data Animal = Dog String | Cat String deriving Show
+
+describeAnimal :: Animal -> String
+describeAnimal (Dog n) = "This is a dog named " ++ n
+describeAnimal (Cat n) = "This is a cat named " ++ n
+
+dogInstance :: Animal
+dogInstance = Dog "Buddy"
+
+catInstance :: Animal
+catInstance = Cat "Whiskers"
+
+-- HC8T8: Type Synonyms and Greeting Function
+type Name = String
+type Age  = Int
+
+greet :: Name -> Age -> String
+greet n a = "Hello, " ++ n ++ "! You are " ++ show a ++ " years old."
+
+-- HC8T9: Record Type and Transaction Function
+data Transaction = Transaction
+  { from          :: Address
+  , to            :: Address
+  , amount        :: Value
+  , transactionId :: String
+  } deriving Show
+
+createTransaction :: Address -> Address -> Value -> String
+createTransaction fromAddr toAddr val =
+    let txId = "TX-" ++ fromAddr ++ "-" ++ toAddr ++ "-" ++ show val
+        _tx = Transaction { from = fromAddr, to = toAddr, amount = val, transactionId = txId }
+    in txId
+
+-- HC8T10: Deriving Show for Book
+data Book = Book
+  { title  :: String
+  , author :: String
+  , year   :: Int
+  } deriving Show
+
+bookInstance :: Book
+bookInstance = Book { title = "Learn You a Haskell", author = "Miran Lipovača", year = 2011 }
+
+-- Main function to demonstrate outputs
+main :: IO ()
+main = do
+    -- HC8T1
+    putStrLn $ "HC8T1: " ++ generateTx "Addr1" "Addr2" 100
+
+    -- HC8T2
+    putStrLn $ "HC8T2: " ++ show bob
+
+    -- HC8T3
+    putStrLn $ "HC8T3: Circle Area = " ++ show circleAreaExample
+    putStrLn $ "HC8T3: Rectangle Area = " ++ show rectangleAreaExample
+
+    -- HC8T4
+    putStrLn $ "HC8T4: " ++ show richard
+
+    -- HC8T5
+    putStrLn $ "HC8T5: " ++ show person1
+    putStrLn $ "HC8T5: " ++ show person2
+
+    -- HC8T6
+    putStrLn $ "HC8T6: " ++ show circleInstance
+    putStrLn $ "HC8T6: " ++ show rectangleInstance
+
+    -- HC8T7
+    putStrLn $ "HC8T7: " ++ describeAnimal dogInstance
+    putStrLn $ "HC8T7: " ++ describeAnimal catInstance
+
+    -- HC8T8
+    putStrLn $ "HC8T8: " ++ greet "John" 40
+
+    -- HC8T9
+    putStrLn $ "HC8T9: Transaction ID = " ++ createTransaction "AddrX" "AddrY" 500
+
+    -- HC8T10
+    putStrLn $ "HC8T10: " ++ show bookInstance
