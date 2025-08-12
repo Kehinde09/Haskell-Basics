@@ -1,0 +1,100 @@
+-- HC7T1 & HC7T2: Color data type with Eq and Ord
+data Color = Red | Green | Blue
+    deriving (Show, Read, Enum, Bounded, Eq, Ord)
+
+-- HC7T3: Function Using Multiple Constraints
+compareValues :: (Eq a, Ord a) => a -> a -> a
+compareValues x y = if x >= y then x else y
+
+-- HC7T4: Shape with Show and Read
+data Shape = Circle Double | Rectangle Double Double
+
+-- Helper to calculate shape area (for Eq & Ord)
+area :: Shape -> Double
+area (Circle r) = pi * r * r
+area (Rectangle w h) = w * h
+
+-- Eq & Ord based on area
+instance Eq Shape where
+    s1 == s2 = area s1 == area s2
+
+instance Ord Shape where
+    compare s1 s2 = compare (area s1) (area s2)
+
+instance Show Shape where
+    show (Circle r) = "Circle with radius " ++ show r
+    show (Rectangle w h) = "Rectangle with width " ++ show w ++ " and height " ++ show h
+
+instance Read Shape where
+    readsPrec _ input =
+        case words input of
+            ["Circle", "with", "radius", r] ->
+                [(Circle (read r), "")]
+            ["Rectangle", "with", "width", w, "and", "height", h] ->
+                [(Rectangle (read w) (read h), "")]
+            _ -> []
+
+-- HC7T5: Function with Num Constraint
+squareArea :: Num a => a -> a
+squareArea side = side * side
+
+-- HC7T6: Using Integral and Floating
+circleCircumference :: (Real a, Floating b) => a -> b
+circleCircumference r = 2 * pi * realToFrac r
+
+-- HC7T7: Bounded and Enum
+nextColor :: Color -> Color
+nextColor c
+    | c == maxBound = minBound
+    | otherwise = succ c
+
+-- HC7T8: Parse a Value from a String Using Read
+parseShape :: String -> Maybe Shape
+parseShape s =
+    case reads s of
+        [(shape, "")] -> Just shape
+        _ -> Nothing
+
+-- HC7T9: Describable Type Class
+class Describable a where
+    describe :: a -> String
+
+instance Describable Bool where
+    describe True = "This is True."
+    describe False = "This is False."
+
+instance Describable Shape where
+    describe (Circle r) = "A circle with radius " ++ show r
+    describe (Rectangle w h) = "A rectangle with width " ++ show w ++ " and height " ++ show h
+
+-- HC7T10: Function with Multiple Constraints
+describeAndCompare :: (Describable a, Ord a) => a -> a -> String
+describeAndCompare x y = describe (max x y)
+
+-- Example usage
+main :: IO ()
+main = do
+    -- HC7T3 Example
+    print $ compareValues 5 10
+    print $ compareValues Red Green
+
+    -- HC7T5 Example
+    print $ squareArea 4
+
+    -- HC7T6 Example
+    print $ circleCircumference 5   -- Works with Int
+    print $ circleCircumference 5.0 -- Works with Double
+
+    -- HC7T7 Example
+    print $ nextColor Blue
+    print $ nextColor Red
+
+    -- HC7T8 Example
+    print $ parseShape "Circle with radius 5.0"
+    print $ parseShape "Rectangle with width 4.0 and height 6.0"
+    print $ parseShape "Invalid shape"
+
+    -- HC7T9 & HC7T10 Example
+    let s1 = Circle 3
+    let s2 = Rectangle 4 5
+    putStrLn $ describeAndCompare s1 s2
