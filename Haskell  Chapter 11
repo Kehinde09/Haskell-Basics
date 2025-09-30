@@ -1,0 +1,82 @@
+module Main where
+
+import Data.Char (toUpper)
+
+-- HC11T1: Greet the User
+greetUser :: String -> String
+greetUser name = "Hello, " ++ name ++ "!"
+
+-- HC11T2: Count Characters in a Line
+countChars :: String -> Int
+countChars line = length line
+
+-- HC11T3: Double a Number
+doubleNumber :: Int -> Int
+doubleNumber n = n * 2
+
+-- HC11T4: Concatenate Two Lines
+concatLines :: String -> String -> String
+concatLines a b = a ++ b
+
+-- HC11T5: Repeat Until "quit"
+repeatUntilQuit :: [String] -> [String]
+repeatUntilQuit xs = takeWhile (/= "quit") xs
+
+-- HC11T6: Uppercase Converter
+toUppercase :: String -> String
+toUppercase = map toUpper
+
+-- HC11T7: User Options
+userOptions :: Int -> String
+userOptions choice =
+  case choice of
+    1 -> "Option 1 selected"
+    2 -> "Option 2 selected"
+    3 -> "Option 3 selected"
+    _ -> "Invalid option"
+
+-- HC11T8: Even or Odd Checker
+evenOrOdd :: Int -> String
+evenOrOdd n =
+  if even n then "Even" else "Odd"
+
+-- HC11T9: Sum Two Numbers
+sumTwo :: Int -> Int -> Int
+sumTwo a b = a + b
+
+-- HC11T10: Reverse User Input
+reverseInput :: String -> String
+reverseInput = reverse
+
+-- Main function to demo all tasks
+main :: IO ()
+main = do
+  putStrLn "HC11T1: Greet the User"
+  putStrLn (greetUser "Alice")
+
+  putStrLn "\nHC11T2: Count Characters in a Line"
+  print (countChars "Hello World")
+
+  putStrLn "\nHC11T3: Double a Number"
+  print (doubleNumber 21)
+
+  putStrLn "\nHC11T4: Concatenate Two Lines"
+  putStrLn (concatLines "Hello " "World")
+
+  putStrLn "\nHC11T5: Repeat Until \"quit\""
+  print (repeatUntilQuit ["one", "two", "quit", "ignored"])
+
+  putStrLn "\nHC11T6: Uppercase Converter"
+  putStrLn (toUppercase "hello world")
+
+  putStrLn "\nHC11T7: User Options"
+  putStrLn (userOptions 2)
+
+  putStrLn "\nHC11T8: Even or Odd Checker"
+  putStrLn (evenOrOdd 7)
+
+  putStrLn "\nHC11T9: Sum Two Numbers"
+  print (sumTwo 5 10)
+
+  putStrLn "\nHC11T10: Reverse User Input"
+  putStrLn (reverseInput "Hello")
