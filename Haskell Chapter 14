@@ -1,0 +1,48 @@
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+
+module Main where
+
+import Data.Char (isSpace, toLower)
+import Data.List (group, sort)
+import Text.Read (readMaybe)
+
+-- HC14T1: Main executable with "Hello, Cabal!"
+main :: IO ()
+main = do
+  putStrLn "== HC14T1 =="
+  putStrLn "Hello, Cabal!"
+
+  putStrLn "\n== HC14T3 =="
+  -- HC14T3: Using NumericUnderscores
+  let bigNumber = 1_000_000 :: Int
+  let anotherBig = 123_456_789 :: Integer
+  print bigNumber
+  print anotherBig
+
+  putStrLn "\n== HC14T4 =="
+  -- HC14T4: Using TypeApplications
+  let inputStr = "42"
+  case readMaybe @Int inputStr of
+    Just n  -> putStrLn $ "Parsed Int: " ++ show n
+    Nothing -> putStrLn "Failed to parse Int"
+
+  putStrLn "\n== HC14T8 =="
+  -- HC14T8: Character Frequency Function
+  print $ counts "Hello, Cabal!"
+
+  putStrLn "\n== HC14T9 =="
+  -- HC14T9: PartialTypeSignatures
+  print $ addThree 10 20 30
+
+-- HC14T8: Count character frequency
+counts :: String -> [(Char, Int)]
+counts str = 
+  let cleaned = filter (not . isSpace) $ map toLower str
+      grouped = group $ sort cleaned
+  in map (\g -> (head g, length g)) grouped
+
+-- HC14T9: Using PartialTypeSignatures
+addThree :: _ -> _ -> _ -> _
+addThree x y z = x + y + z
