@@ -1,0 +1,54 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
+import Control.Exception
+import Data.Typeable
+import Text.Read (readMaybe)
+
+-- HC15T3: Custom Exception for Traffic Light Errors
+data TrafficLightError = RedLight | YellowLight | GreenLight
+    deriving (Show, Typeable)
+
+instance Exception TrafficLightError
+
+-- HC15T4: Exception Handler for Traffic Light
+handleTrafficLight :: IO () -> IO ()
+handleTrafficLight action = action `catch` handler
+  where
+    handler :: TrafficLightError -> IO ()
+    handler e = putStrLn $ "Traffic Light Error Caught: " ++ show e
+
+-- HC15T5: Safe Division Using Maybe
+safeDiv :: Double -> Double -> Maybe Double
+safeDiv _ 0 = Nothing
+safeDiv x y = Just (x / y)
+
+-- HC15T7: Velocity Calculation with Optionals and Parsing Handling
+calculateVelocity :: String -> String -> Maybe Double
+calculateVelocity sDistance sTime = do
+    distance <- readMaybe sDistance :: Maybe Double
+    time <- readMaybe sTime :: Maybe Double
+    safeDiv distance time
+
+-- HC15T8: Division with Either for Detailed Errors
+safeDivEither :: Double -> Double -> Either String Double
+safeDivEither _ 0 = Left "Error: Division by zero!"
+safeDivEither x y = Right (x / y)
+
+-- Main Program to demonstrate all functionalities
+main :: IO ()
+main = do
+    putStrLn "=== HC15T3 & HC15T4: Traffic Light Exception ==="
+    handleTrafficLight $ throwIO RedLight
+
+    putStrLn "\n=== HC15T5: Safe Division with Maybe ==="
+    print $ safeDiv 10 2    -- Just 5.0
+    print $ safeDiv 10 0    -- Nothing
+
+    putStrLn "\n=== HC15T7: Velocity Calculation with Maybe and Parsing ==="
+    print $ calculateVelocity "100" "20"   -- Just 5.0
+    print $ calculateVelocity "100" "0"    -- Nothing
+    print $ calculateVelocity "abc" "20"   -- Nothing
+
+    putStrLn "\n=== HC15T8: Division with Either for Detailed Errors ==="
+    print $ safeDivEither 10 2   -- Right 5.0
+    print $ safeDivEither 10 0   -- Left "Error: Division by zero!"
