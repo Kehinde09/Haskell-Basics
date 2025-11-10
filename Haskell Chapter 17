@@ -1,0 +1,105 @@
+-- HC17T1–HC17T7, HC17T9–HC17T10: Complete Haskell Code
+
+-- HC17T1 & HC17T3: Severity type with Semigroup and Monoid
+data Severity = Low | Medium | High | Critical
+    deriving (Show, Eq, Ord)
+
+instance Semigroup Severity where
+    (<>) = max
+
+instance Monoid Severity where
+    mempty = Low
+    mappend = (<>)
+
+-- HC17T2: Min and Max newtypes with Semigroup
+newtype Min a = Min { getMin :: a } deriving (Show, Eq, Ord)
+newtype Max a = Max { getMax :: a } deriving (Show, Eq, Ord)
+
+instance Ord a => Semigroup (Min a) where
+    Min x <> Min y = Min (min x y)
+
+instance Ord a => Semigroup (Max a) where
+    Max x <> Max y = Max (max x y)
+
+-- HC17T4: Sum newtype with Monoid
+newtype Sum a = Sum { getSum :: a } deriving (Show, Eq)
+
+instance Num a => Semigroup (Sum a) where
+    Sum x <> Sum y = Sum (x + y)
+
+instance Num a => Monoid (Sum a) where
+    mempty = Sum 0
+    mappend = (<>)
+
+-- HC17T5: combineLists function
+combineLists :: [Int] -> [Int] -> [Int]
+combineLists = (<>)
+
+-- HC17T6: maxSeverity function using mconcat
+maxSeverity :: [Severity] -> Severity
+maxSeverity = mconcat
+
+-- HC17T7: Product newtype and multiplyProducts
+newtype Product a = Product { getProduct :: a } deriving (Show, Eq, Ord)
+
+instance Num a => Semigroup (Product a) where
+    Product x <> Product y = Product (x * y)
+
+instance Num a => Monoid (Product a) where
+    mempty = Product 1
+    mappend = (<>)
+
+multiplyProducts :: Num a => [Product a] -> Product a
+multiplyProducts = mconcat
+
+-- HC17T9 & HC17T10: Config data type with Semigroup and Monoid
+data Config = Config
+    { loggingLevel :: Int  -- higher number = more verbose
+    , timeout      :: Int  -- in seconds
+    , retries      :: Int
+    } deriving (Show, Eq)
+
+instance Semigroup Config where
+    c1 <> c2 = Config
+        { loggingLevel = max (loggingLevel c1) (loggingLevel c2)
+        , timeout      = min (timeout c1) (timeout c2)
+        , retries      = max (retries c1) (retries c2)
+        }
+
+instance Monoid Config where
+    mempty = Config { loggingLevel = 0, timeout = maxBound, retries = 0 }
+    mappend = (<>)
+
+-- Demonstration (non-interactive)
+main :: IO ()
+main = do
+    putStrLn "=== HC17T1 & HC17T3: Severity ==="
+    print $ Low <> Medium
+    print $ Critical <> High
+    print $ mconcat [Low, Medium, High, Critical]
+
+    putStrLn "\n=== HC17T2: Min and Max ==="
+    print $ Min 5 <> Min 3
+    print $ Max 5 <> Max 10
+
+    putStrLn "\n=== HC17T4: Sum ==="
+    print $ getSum $ Sum 5 <> Sum 7
+    print $ getSum $ mconcat [Sum 1, Sum 2, Sum 3]
+
+    putStrLn "\n=== HC17T5: combineLists ==="
+    print $ combineLists [1,2] [3,4,5]
+
+    putStrLn "\n=== HC17T6: maxSeverity ==="
+    print $ maxSeverity [Low, Medium, High, Critical]
+
+    putStrLn "\n=== HC17T7: multiplyProducts ==="
+    print $ getProduct $ multiplyProducts [Product 2, Product 3, Product 4]
+
+    putStrLn "\n=== HC17T9 & HC17T10: Config ==="
+    let cfg1 = Config { loggingLevel = 2, timeout = 60, retries = 3 }
+    let cfg2 = Config { loggingLevel = 5, timeout = 30, retries = 5 }
+    let cfg3 = Config { loggingLevel = 3, timeout = 45, retries = 2 }
+    print $ cfg1 <> cfg2
+    print $ cfg1 <> mempty
+    print $ mempty <> cfg2
+    print $ mconcat [cfg1, cfg2, cfg3, mempty]
