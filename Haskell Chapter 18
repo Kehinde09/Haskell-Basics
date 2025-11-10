@@ -1,0 +1,114 @@
+{-# LANGUAGE DeriveFunctor #-}
+
+module Main where
+
+import Data.Char (toLower)
+
+-- HC18T1: mapToLower — convert all characters in a list to lowercase.
+mapToLower :: [Char] -> [Char]
+mapToLower = fmap toLower
+
+-- HC18T2: Functor instance for Tree
+data Tree a
+    = Empty
+    | Node a (Tree a) (Tree a)
+    deriving (Show, Eq)
+
+instance Functor Tree where
+    fmap _ Empty                = Empty
+    fmap f (Node x left right)  = Node (f x) (fmap f left) (fmap f right)
+
+-- HC18T3: incrementTreeValues — adds one to every value in a Tree
+incrementTreeValues :: Num a => Tree a -> Tree a
+incrementTreeValues = fmap (+1)
+
+-- HC18T4: mapToBits — convert a list of Booleans to '1' or '0'
+mapToBits :: [Bool] -> [Char]
+mapToBits = fmap (\b -> if b then '1' else '0')
+
+-- HC18T6: applyToMaybe — uses fmap to transform the value inside Maybe
+applyToMaybe :: (a -> b) -> Maybe a -> Maybe b
+applyToMaybe = fmap
+
+-- HC18T7: fmapTuple — apply a function to the second element of a tuple (a,b)
+fmapTuple :: (b -> c) -> (a, b) -> (a, c)
+fmapTuple = fmap
+
+-- HC18T8: identityLawCheck — verify Functor identity law
+identityLawCheck :: (Functor f, Eq (f a)) => f a -> Bool
+identityLawCheck x = fmap id x == x
+
+-- HC18T9: compositionLawCheck — verify Functor composition law
+compositionLawCheck :: (Functor f, Eq (f c)) => (b -> c) -> (a -> b) -> f a -> Bool
+compositionLawCheck f g x = fmap (f . g) x == (fmap f . fmap g) x
+
+-- HC18T10: nestedFmap — apply a function to nested structure using multiple fmap calls
+nestedFmap :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+nestedFmap = fmap . fmap
+
+-- Example data for demonstration
+exampleTree :: Tree Int
+exampleTree = Node 1 (Node 2 Empty Empty) (Node 3 Empty Empty)
+
+exampleChars :: [Char]
+exampleChars = "Hello WORLD!"
+
+exampleBools :: [Bool]
+exampleBools = [True, False, True, True, False]
+
+exampleMaybe :: Maybe Int
+exampleMaybe = Just 10
+
+exampleTuple :: (String, Int)
+exampleTuple = ("Count", 5)
+
+exampleList :: [Int]
+exampleList = [1,2,3]
+
+exampleNested :: [Maybe Int]
+exampleNested = [Just 4, Nothing, Just 6]
+
+main :: IO ()
+main = do
+    -- HC18T1
+    putStrLn "-- HC18T1 mapToLower --"
+    print exampleChars
+    print $ mapToLower exampleChars
+
+    -- HC18T2 & T3
+    putStrLn "\n-- HC18T2 & HC18T3 (Tree example) --"
+    print exampleTree
+    print $ incrementTreeValues exampleTree
+
+    -- HC18T4
+    putStrLn "\n-- HC18T4 mapToBits --"
+    print exampleBools
+    print $ mapToBits exampleBools
+
+    -- HC18T6
+    putStrLn "\n-- HC18T6 applyToMaybe --"
+    print exampleMaybe
+    print $ applyToMaybe (*2) exampleMaybe
+    print (Nothing :: Maybe Int)
+    print $ applyToMaybe (*2) (Nothing :: Maybe Int)
+
+    -- HC18T7
+    putStrLn "\n-- HC18T7 fmapTuple --"
+    print exampleTuple
+    print $ fmapTuple (+1) exampleTuple
+
+    -- HC18T8
+    putStrLn "\n-- HC18T8 identityLawCheck --"
+    print $ identityLawCheck exampleTree
+    print $ identityLawCheck exampleList
+
+    -- HC18T9
+    putStrLn "\n-- HC18T9 compositionLawCheck --"
+    let f = (*2)
+        g = (+3)
+    print $ compositionLawCheck f g exampleList
+
+    -- HC18T10
+    putStrLn "\n-- HC18T10 nestedFmap --"
+    print exampleNested
+    print $ nestedFmap (*10) exampleNested
