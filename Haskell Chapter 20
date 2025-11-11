@@ -1,0 +1,196 @@
+{-# LANGUAGE FlexibleContexts #-}
+
+import Control.Monad
+import Control.Monad.State
+import Control.Monad.Reader
+import Control.Monad.Identity
+import Control.Monad.Writer
+import Control.Applicative
+import Control.Exception (SomeException, catch)
+
+--------------------------------------------------
+-- HC20T1: safeDivide with Maybe Monad
+--------------------------------------------------
+safeDivide :: (Eq a, Fractional a) => a -> a -> Maybe a
+safeDivide _ 0 = Nothing
+safeDivide x y = Just (x / y)
+
+--------------------------------------------------
+-- HC20T2: sequenceMaybe for List of Maybe
+--------------------------------------------------
+sequenceMaybe :: [Maybe a] -> Maybe [a]
+sequenceMaybe = traverse id
+
+--------------------------------------------------
+-- HC20T4: countChars with State Monad
+--------------------------------------------------
+countChars :: Char -> String -> State Int ()
+countChars c [] = return ()
+countChars c (x:xs) = do
+    when (x == c) $ modify (+1)
+    countChars c xs
+
+--------------------------------------------------
+-- HC20T5: Reader Monad for Configurable Greeting
+--------------------------------------------------
+type Config = String
+
+greet :: String -> Reader Config String
+greet name = do
+    prefix <- ask
+    return (prefix ++ ", " ++ name ++ "!")
+
+--------------------------------------------------
+-- HC20T6: doubleMonad Combining Maybe and List
+--------------------------------------------------
+doubleMonad :: Maybe a -> [a] -> [Maybe a]
+doubleMonad Nothing _ = [Nothing]
+doubleMonad (Just _) xs = map Just xs
+
+--------------------------------------------------
+-- HC20T7: findFirst with Either Monad
+--------------------------------------------------
+findFirst :: (a -> Bool) -> [a] -> Either String a
+findFirst _ [] = Left "No matching element found"
+findFirst p (x:xs)
+    | p x       = Right x
+    | otherwise = findFirst p xs
+
+--------------------------------------------------
+-- HC20T8: Parser Monad for Simple Expressions
+--------------------------------------------------
+newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
+
+instance Functor Parser where
+    fmap f (Parser p) = Parser $ \s -> do
+        (x, rest) <- p s
+        return (f x, rest)
+
+instance Applicative Parser where
+    pure x = Parser $ \s -> Just (x, s)
+    (Parser pf) <*> (Parser pa) = Parser $ \s -> do
+        (f, s') <- pf s
+        (a, s'') <- pa s'
+        return (f a, s'')
+
+instance Monad Parser where
+    (Parser pa) >>= f = Parser $ \s -> do
+        (a, s') <- pa s
+        runParser (f a) s'
+
+charP :: Char -> Parser Char
+charP c = Parser f
+  where f [] = Nothing
+        f (x:xs) = if x == c then Just (c, xs) else Nothing
+
+parseABC :: Parser (Char, Char, Char)
+parseABC = do
+    a <- charP 'a'
+    b <- charP 'b'
+    c <- charP 'c'
+    return (a, b, c)
+
+--------------------------------------------------
+-- HC20T9: replicateMonad with Identity Monad
+--------------------------------------------------
+replicateMonad :: Int -> a -> Identity [a]
+replicateMonad n x = return (replicate n x)
+
+--------------------------------------------------
+-- HC20T14: mapMFilter Monadic Map-Filter
+--------------------------------------------------
+mapMFilter :: Monad m => (a -> m (Maybe b)) -> [a] -> m [b]
+mapMFilter _ [] = return []
+mapMFilter f (x:xs) = do
+    r <- f x
+    rs <- mapMFilter f xs
+    case r of
+        Nothing -> return rs
+        Just y  -> return (y:rs)
+
+--------------------------------------------------
+-- HC20T16: retryIO (simulated) with IO Monad
+--------------------------------------------------
+retryIO :: Int -> IO a -> IO (Maybe a)
+retryIO 0 _ = return Nothing
+retryIO n action = do
+    result <- (Just <$> action) `catch` (\(_ :: SomeException) -> return Nothing)
+    case result of
+        Just val -> return (Just val)
+        Nothing  -> retryIO (n-1) action
+
+--------------------------------------------------
+-- HC20T17: validatePassword with Either Monad
+--------------------------------------------------
+validatePassword :: String -> Either String String
+validatePassword pwd
+    | length pwd < 8 = Left "Password too short"
+    | not (any (`elem` ['0'..'9']) pwd) = Left "Password must contain a digit"
+    | not (any (`elem` ['A'..'Z']) pwd) = Left "Password must contain uppercase"
+    | otherwise = Right pwd
+
+--------------------------------------------------
+-- HC20T19: Writer Monad-based Logging System
+--------------------------------------------------
+logFunc :: String -> Int -> Writer [String] Int
+logFunc name x = writer (x*2, [name ++ " called with " ++ show x])
+
+--------------------------------------------------
+-- HC20T20: batchProcessing with Monadic Bind
+--------------------------------------------------
+batchProcessing :: Monad m => [a -> m b] -> a -> m [b]
+batchProcessing [] _ = return []
+batchProcessing (f:fs) x = do
+    y <- f x
+    ys <- batchProcessing fs x
+    return (y:ys)
+
+--------------------------------------------------
+-- Non-interactive test main
+--------------------------------------------------
+main :: IO ()
+main = do
+    putStrLn "=== HC20T1: safeDivide ==="
+    print $ safeDivide 10 2
+    print $ safeDivide 10 0
+
+    putStrLn "\n=== HC20T2: sequenceMaybe ==="
+    print $ sequenceMaybe [Just 1, Just 2, Just 3]
+    print $ sequenceMaybe [Just 1, Nothing, Just 3]
+
+    putStrLn "\n=== HC20T4: countChars ==="
+    print $ execState (countChars 'a' "banana") 0
+
+    putStrLn "\n=== HC20T5: greet ==="
+    putStrLn $ runReader (greet "Alice") "Hello"
+
+    putStrLn "\n=== HC20T6: doubleMonad ==="
+    print $ doubleMonad (Just 5) [1,2,3]
+    print $ doubleMonad Nothing [1,2,3]
+
+    putStrLn "\n=== HC20T7: findFirst ==="
+    print $ findFirst (>3) [1,2,3,4,5]
+    print $ findFirst (>10) [1,2,3]
+
+    putStrLn "\n=== HC20T8: Parser ==="
+    print $ runParser parseABC "abcdef"    -- Should parse ('a','b','c') and leave "def"
+    print $ runParser parseABC "abxdef"    -- Should fail, returns Nothing
+
+    putStrLn "\n=== HC20T9: replicateMonad ==="
+    print $ runIdentity $ replicateMonad 3 "Hi"
+
+    putStrLn "\n=== HC20T17: validatePassword ==="
+    print $ validatePassword "Short1"
+    print $ validatePassword "ValidPass1"
+
+    putStrLn "\n=== HC20T19: logFunc ==="
+    print $ runWriter $ logFunc "double" 5
+
+    putStrLn "\n=== HC20T20: batchProcessing ==="
+    let actions = [\x -> return (x+1), \x -> return (x*2)]
+    print =<< batchProcessing actions 3
+
+    putStrLn "\n=== HC20T16: retryIO simulation ==="
+    let failingAction = error "Fail!" :: IO Int
+    result <- retryIO 3 (return 42) -- simulated success
+    print result
