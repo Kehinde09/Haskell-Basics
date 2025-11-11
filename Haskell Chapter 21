@@ -1,0 +1,218 @@
+{-# LANGUAGE InstanceSigs #-}
+
+module Main where
+
+import Data.Monoid
+import qualified Data.Map as Map
+
+-- HC21T1-4: Writer
+newtype Writer w a = Writer { runWriter :: (a,w) } deriving Show
+
+tell :: Monoid w => w -> Writer w ()
+tell w = Writer ((), w)
+
+instance Functor (Writer w) where
+  fmap f (Writer (a,w)) = Writer (f a, w)
+
+instance Monoid w => Applicative (Writer w) where
+  pure a = Writer (a, mempty)
+  Writer (f,w1) <*> Writer (a,w2) = Writer (f a, w1 <> w2)
+
+instance Monoid w => Monad (Writer w) where
+  Writer (a,w1) >>= k = let Writer (b,w2) = k a in Writer (b, w1 <> w2)
+
+addW, subW, mulW :: Int -> Int -> Writer [String] Int
+addW x y = tell ["Adding " ++ show x ++ " + " ++ show y] >> return (x+y)
+subW x y = tell ["Subtracting " ++ show x ++ " - " ++ show y] >> return (x-y)
+mulW x y = tell ["Multiplying " ++ show x ++ " * " ++ show y] >> return (x*y)
+
+calcDemo :: Writer [String] Int
+calcDemo = do
+  a <- addW 3 4
+  b <- subW a 2
+  mulW b 10
+
+-- listen / pass
+listen :: Monoid w => Writer w a -> Writer w (a,w)
+listen (Writer (a,w)) = Writer ((a,w), w)
+
+pass :: Monoid w => Writer w (a, w->w) -> Writer w a
+pass (Writer ((a,f),w)) = Writer (a, f w)
+
+-- Redact logs containing "secret"
+redact :: [String] -> [String]
+redact = map (\line -> if "secret" `elem` words line then "<redacted>" else line)
+
+-- Count steps using Sum
+calcCount :: Writer (Sum Int) Int
+calcCount = do
+  tell (Sum 1)
+  tell (Sum 1)
+  return (3+4)
+
+-- HC21T5-7: Reader
+newtype Reader r a = Reader { runReader :: r -> a }
+
+ask :: Reader r r
+ask = Reader id
+
+local :: (r->r) -> Reader r a -> Reader r a
+local f (Reader g) = Reader (g . f)
+
+instance Functor (Reader r) where
+  fmap f (Reader g) = Reader (f . g)
+
+instance Applicative (Reader r) where
+  pure a = Reader (\_ -> a)
+  Reader f <*> Reader a = Reader (\r -> f r (a r))
+
+instance Monad (Reader r) where
+  Reader a >>= k = Reader (\r -> runReader (k (a r)) r)
+
+data Config = Config { greetPrefix :: String, shout :: Bool }
+
+greet :: String -> Reader Config String
+greet name = do
+  cfg <- ask
+  let msg = greetPrefix cfg ++ ", " ++ name
+  return $ if shout cfg then map toUpper msg else msg
+  where toUpper c = if 'a' <= c && c <= 'z' then toEnum (fromEnum c - 32) else c
+
+greetFlipped :: String -> Reader Config String
+greetFlipped name = local (\c -> c { shout = not (shout c) }) (greet name)
+
+-- HC21T8-12: State
+newtype State s a = MkState { runState :: s -> (a,s) }
+
+instance Functor (State s) where
+  fmap f (MkState g) = MkState $ \s -> let (a,s') = g s in (f a, s')
+
+instance Applicative (State s) where
+  pure a = MkState $ \s -> (a,s)
+  MkState f <*> MkState a = MkState $ \s ->
+    let (g,s1) = f s
+        (b,s2) = a s1
+    in (g b, s2)
+
+instance Monad (State s) where
+  MkState a >>= k = MkState $ \s ->
+    let (b,s1) = a s
+        MkState c = k b
+    in c s1
+
+get :: State s s
+get = MkState $ \s -> (s,s)
+
+put :: s -> State s ()
+put s = MkState $ \_ -> ((),s)
+
+modify :: (s -> s) -> State s ()
+modify f = MkState $ \s -> ((), f s)
+
+-- Counter while mapping
+mapCount :: (a -> b) -> [a] -> State Int [b]
+mapCount f [] = return []
+mapCount f (x:xs) = do
+  modify (+1)
+  rest <- mapCount f xs
+  return (f x : rest)
+
+-- Vending Machine
+data VendingState = MkVendingState { items :: Int, credit :: Int } deriving Show
+
+insertCoin :: Int -> State VendingState ()
+insertCoin n = modify (\s -> s { credit = credit s + n })
+
+vend :: State VendingState String
+vend = MkState $ \s ->
+  if items s > 0 && credit s >= 2
+    then ("Candy", s { items = items s - 1, credit = credit s - 2 })
+    else ("No candy", s)
+
+getChange :: State VendingState Int
+getChange = MkState $ \s -> (credit s, s { credit = 0 })
+
+vendingSequence :: State VendingState String
+vendingSequence = do
+  insertCoin 3
+  candy <- vend
+  change <- getChange
+  return $ candy ++ ", change: " ++ show change
+
+-- Undo stack
+setValue :: Int -> State (Int,[Int]) ()
+setValue x = do
+  (current,hist) <- get
+  put (x, current:hist)
+
+undo :: State (Int,[Int]) ()
+undo = do
+  (_,hist) <- get
+  case hist of
+    (h:hs) -> put (h, hs)
+    [] -> return ()
+
+-- Deterministic random walk
+randomStep :: State (Int,(Int,Int)) ()
+randomStep = MkState $ \(seed,(x,y)) ->
+  let seed' = (seed * 73 + 1) `mod` 100
+      (dx,dy) = case seed' `mod` 4 of
+                  0 -> (1,0)
+                  1 -> (-1,0)
+                  2 -> (0,1)
+                  _ -> (0,-1)
+  in ((), (seed',(x+dx,y+dy)))
+
+randomWalk :: Int -> State (Int,(Int,Int)) [(Int,Int)]
+randomWalk 0 = do
+  (_,pos) <- get
+  return [pos]
+randomWalk n = do
+  (_,pos) <- get
+  randomStep
+  rest <- randomWalk (n-1)
+  return (pos:rest)
+
+-- Reader + State: tick
+tick :: Reader Config (State Int Bool)
+tick = Reader $ \cfg -> do
+  modify (+1)
+  x <- get
+  return (x >= threshold cfg)
+  where threshold c = if shout c then 3 else 5 -- just example
+
+-- Main demo
+main :: IO ()
+main = do
+  -- Writer demo
+  print $ runWriter calcDemo
+
+  -- Redact demo
+  let secretLog = Writer ((), ["this is secret", "all good"])
+  print $ runWriter $ pass (fmap (\w -> (w, redact)) secretLog)
+
+  -- Count demo
+  print $ runWriter calcCount
+
+  -- Reader demo
+  let cfg = Config "Hello" True
+  print $ runReader (greet "Alice") cfg
+  print $ runReader (greetFlipped "Bob") cfg
+
+  -- State demo: mapCount
+  let (res,count) = runState (mapCount (*2) [1,2,3]) 0
+  print (res,count)
+
+  -- Vending demo
+  let vs0 = MkVendingState 10 0
+  let (out,vs1) = runState vendingSequence vs0
+  print (out, vs1)
+
+  -- Undo demo
+  let s0 = (0,[])
+  let (_,s1) = runState (setValue 5 >> setValue 10 >> undo) s0
+  print s1
+
+  -- Random walk
+  let (_, path) = runState (randomWalk 5) (42,(0,0))
+  print path
